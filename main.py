@@ -12,6 +12,7 @@ WHITE = (255,255,255)
 RED = (255,0,0)
 GREEN = (0,255,0)
 BLUE = (0,0,255)
+KEY = (1,1,1) # invisible color
 
 # variable definitions
 
@@ -24,7 +25,7 @@ clock = pygame.time.Clock()
 def get_image(self, x, y, width, height):
         image = pygame.Surface([width, height]).convert()
         image.blit(self.sprite_sheet, (0, 0), (x, y, width, height))
-        image.set_colorkey(BLACK)
+        image.set_colorkey(KEY)
         return image
 
 class SpriteSheet(object):
@@ -33,7 +34,7 @@ class SpriteSheet(object):
     def get_image(self, x, y, width, height):
         image = pygame.Surface([width, height]).convert()
         image.blit(self.sprite_sheet, (0, 0), (x, y, width, height))
-        image.set_colorkey(BLACK)
+        image.set_colorkey(KEY)
         return image
 
 # class definitions
@@ -81,15 +82,46 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.xspeed
         self.rect.y += self.yspeed
 
+class Background(pygame.sprite.Sprite):
+    def __init__(self, type):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface([1024, 1536])
+        if type == 1:
+            background = SpriteSheet("background.png")
+        self.image = background.get_image(0,0,1024,1536)
+        self.rect = self.image.get_rect()
+    def update(self):
+        self.rect.y += 1
+        if self.rect.y > 0:
+            self.rect.y = -768
+        
 # screen definition
 
 screen_width = 1024
 screen_height = 768
 screen = pygame.display.set_mode([screen_width, screen_height])
+pygame.display.set_caption("Action Fighter Game")
 
 # sprite group definitions
 
 all_sprites_list = pygame.sprite.Group()
+all_backgrounds_list = pygame.sprite.Group()
+all_players_list = pygame.sprite.Group()
+
+# layer group definitions
+
+# 1 = bottom, 10 = top
+
+layer1 = pygame.sprite.Group() # background
+layer2 = pygame.sprite.Group()
+layer3 = pygame.sprite.Group()
+layer4 = pygame.sprite.Group()
+layer5 = pygame.sprite.Group()
+layer6 = pygame.sprite.Group() # player
+layer7 = pygame.sprite.Group()
+layer8 = pygame.sprite.Group()
+layer9 = pygame.sprite.Group()
+layer10 = pygame.sprite.Group() 
 
 # sprite definitions
 
@@ -97,8 +129,19 @@ all_sprites_list = pygame.sprite.Group()
 
 player = Player(BLUE, 100, 100)
 all_sprites_list.add(player)
+all_players_list.add(player)
+layer6.add(player)
 player.rect.x = 472
 player.rect.y = 534
+
+## background definition
+
+background = Background(1)
+all_sprites_list.add(background)
+all_backgrounds_list.add(background)
+layer1.add(background)
+background.rect.x = 0
+background.rect.y = -768
 
 # function definitions
 
@@ -138,11 +181,22 @@ while not done:
 
     player.update()
 
+    background.update()
+
     # screen drawing
 
     screen.fill(BLACK)
 
-    all_sprites_list.draw(screen)
+    layer1.draw(screen)
+    layer2.draw(screen)
+    layer3.draw(screen)
+    layer4.draw(screen)
+    layer5.draw(screen)
+    layer6.draw(screen)
+    layer7.draw(screen)
+    layer8.draw(screen)
+    layer9.draw(screen)
+    layer10.draw(screen)
 
     # screen update
 
