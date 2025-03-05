@@ -18,6 +18,10 @@ KEY = (1,1,1) # invisible color
 
 done = False
 
+distance = 0
+
+scroll_speed = 0
+
 clock = pygame.time.Clock()
 
 # general function definitions
@@ -36,7 +40,19 @@ class SpriteSheet(object):
         image.blit(self.sprite_sheet, (0, 0), (x, y, width, height))
         image.set_colorkey(KEY)
         return image
+def background_check():
+    for background in all_backgrounds_list():
+        if background.rect.y >= 0:
+            background2 = Background(1)
+            all_backgrounds_list.remove(background)
+            all_sprites_list.remove(background)
 
+def road_check():
+    for road in all_roads_list():
+        if road.rect.y >= 0:
+            road2 = Road(1)
+            all_roads_list.remove(road)
+            all_sprites_list.remove(road)
 # class definitions
 
 class Player(pygame.sprite.Sprite):
@@ -44,7 +60,9 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface([width, height])
         player = SpriteSheet("spritesheet.png")
-        self.image = player.get_image(0,0,80,100)
+        self.width = 80
+        self.height = 100
+        self.image = player.get_image(0,0,self.width,self.height)
         self.rect = self.image.get_rect()
         self.xspeed = 0
         self.yspeed = 0
@@ -78,23 +96,50 @@ class Player(pygame.sprite.Sprite):
             self.xspeed = self.speed
 
         # location update
-
+        
         self.rect.x += self.xspeed
         self.rect.y += self.yspeed
+
+        # check for screen borders
+
+        if self.rect.x + self.width >= screen_width - 228:
+            self.rect.x = screen_width - self.width - 228
+        if self.rect.x <= 228:
+            self.rect.x = 228
+        
+        if self.rect.y + self.height >= screen_height:
+            self.rect.y = screen_height - self.height
+        if self.rect.y <= 0:
+            self.rect.y = 0
 
 class Background(pygame.sprite.Sprite):
     def __init__(self, type):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface([1024, 1536])
         if type == 1:
-            background = SpriteSheet("background.png")
+            background = SpriteSheet("grass1.png")
         self.image = background.get_image(0,0,1024,1536)
         self.rect = self.image.get_rect()
     def update(self):
-        self.rect.y += 1
+        global scroll_speed
+        self.rect.y += scroll_speed
         if self.rect.y > 0:
             self.rect.y = -768
-        
+
+class Road(pygame.sprite.Sprite):
+    def __init__(self,type):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface([568, 1536])
+        if type == 1:
+            background = SpriteSheet("road.png")
+            self.image = background.get_image(0,0,568,1536)
+        self.rect = self.image.get_rect()
+    def update(self):
+        global scroll_speed
+        self.rect.y += scroll_speed
+        if self.rect.y > 0:
+            self.rect.y = -768
+
 # screen definition
 
 screen_width = 1024
@@ -107,6 +152,7 @@ pygame.display.set_caption("Action Fighter Game")
 all_sprites_list = pygame.sprite.Group()
 all_backgrounds_list = pygame.sprite.Group()
 all_players_list = pygame.sprite.Group()
+all_roads_list = pygame.sprite.Group()
 
 # layer group definitions
 
@@ -142,6 +188,15 @@ all_backgrounds_list.add(background)
 layer1.add(background)
 background.rect.x = 0
 background.rect.y = -768
+
+## road definition
+
+road = Road(1)
+all_sprites_list.add(road)
+all_roads_list.add(road)
+layer2.add(road)
+road.rect.x = 228
+road.rect.y = 0
 
 # function definitions
 
@@ -182,6 +237,13 @@ while not done:
     player.update()
 
     background.update()
+
+    road.update()
+
+    # scroll speed update
+
+    if scroll_speed < 10:
+            scroll_speed += 0.05
 
     # screen drawing
 
