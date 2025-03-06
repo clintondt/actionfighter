@@ -4,6 +4,7 @@ import pygame
 import math
 import random
 import time
+from collections import deque
 
 # color definitions
 
@@ -12,7 +13,7 @@ WHITE = (255,255,255)
 RED = (255,0,0)
 GREEN = (0,255,0)
 BLUE = (0,0,255)
-KEY = (1,1,1) # invisible color
+KEY = (100,100,100) # invisible color
 
 # variable definitions
 
@@ -23,6 +24,8 @@ distance = 0
 scroll_speed = 0
 
 clock = pygame.time.Clock()
+
+current_state = 1
 
 # general function definitions
 
@@ -40,19 +43,41 @@ class SpriteSheet(object):
         image.blit(self.sprite_sheet, (0, 0), (x, y, width, height))
         image.set_colorkey(KEY)
         return image
+
 def background_check():
     for background in all_backgrounds_list():
         if background.rect.y >= 0:
-            background2 = Background(1)
+            background2 = Background(current_state)
             all_backgrounds_list.remove(background)
             all_sprites_list.remove(background)
 
 def road_check():
     for road in all_roads_list():
         if road.rect.y >= 0:
-            road2 = Road(1)
+            road2 = Road(current_state)
             all_roads_list.remove(road)
             all_sprites_list.remove(road)
+
+def state_check():
+    global current_state
+    if distance > 100:
+        rand_1 = random.randint(1,100)
+        if rand_1 > 80:
+            current_state = 2
+
+def generate_map(map_list):
+    for x in range(1,5):
+        map_list.appendleft(1)
+    map_list.appendleft(2)
+    map_list.appendleft(3)
+    for x in range(1,5):
+        map_list.appendleft(4)
+    map_list.appendleft(5)
+    map_list.appendleft(6)
+    for x in range(1,5):
+        map_list.appendleftd(1)
+
+
 # class definitions
 
 class Player(pygame.sprite.Sprite):
@@ -113,10 +138,10 @@ class Player(pygame.sprite.Sprite):
             self.rect.y = 0
 
 class Background(pygame.sprite.Sprite):
-    def __init__(self, type):
+    def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface([1024, 1536])
-        if type == 1:
+        if current_state == 1:
             background = SpriteSheet("grass1.png")
         self.image = background.get_image(0,0,1024,1536)
         self.rect = self.image.get_rect()
@@ -127,18 +152,38 @@ class Background(pygame.sprite.Sprite):
             self.rect.y = -768
 
 class Road(pygame.sprite.Sprite):
-    def __init__(self,type):
+    def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface([568, 1536])
-        if type == 1:
-            background = SpriteSheet("road.png")
-            self.image = background.get_image(0,0,568,1536)
+        self.image = pygame.Surface([1024, 1536])
+        background = SpriteSheet("road.png")
+        self.image = background.get_image(0,0,1024,1536)
         self.rect = self.image.get_rect()
     def update(self):
         global scroll_speed
         self.rect.y += scroll_speed
         if self.rect.y > 0:
+            self.gen()
             self.rect.y = -768
+    def gen(self):
+        next = map_list.pop()
+        if next == 1:
+            background = SpriteSheet("road.png")
+            self.image = background.get_image(0,0,1024,1536)
+        elif next == 2:
+            background = SpriteSheet("road2.png")
+            self.image = background.get_image(0,0,1024,1536)
+        elif next == 3:
+            background = SpriteSheet("road3.png")
+            self.image = background.get_image(0,0,1024,1536)
+        elif next == 4:
+            background = SpriteSheet("road4.png")
+            self.image = background.get_image(0,0,1024,1536)
+        elif next == 5:
+            background = SpriteSheet("road5.png")
+            self.image = background.get_image(0,0,1024,1536)
+        elif next == 6:
+            background = SpriteSheet("road6.png")
+            self.image = background.get_image(0,0,1024,1536)
 
 # screen definition
 
@@ -146,6 +191,11 @@ screen_width = 1024
 screen_height = 768
 screen = pygame.display.set_mode([screen_width, screen_height])
 pygame.display.set_caption("Action Fighter Game")
+
+# map generation function
+
+map_list = deque()
+generate_map(map_list)
 
 # sprite group definitions
 
@@ -177,12 +227,12 @@ player = Player(BLUE, 100, 100)
 all_sprites_list.add(player)
 all_players_list.add(player)
 layer6.add(player)
-player.rect.x = 472
+player.rect.x = 0
 player.rect.y = 534
 
 ## background definition
 
-background = Background(1)
+background = Background()
 all_sprites_list.add(background)
 all_backgrounds_list.add(background)
 layer1.add(background)
@@ -191,11 +241,11 @@ background.rect.y = -768
 
 ## road definition
 
-road = Road(1)
+road = Road()
 all_sprites_list.add(road)
 all_roads_list.add(road)
 layer2.add(road)
-road.rect.x = 228
+road.rect.x = 0
 road.rect.y = 0
 
 # function definitions
@@ -232,6 +282,14 @@ while not done:
             elif event.key == pygame.K_d:
                 player.D = False
 
+    # distance increment
+
+    distance += 1
+
+    # state check
+
+    state_check()
+    
     # sprite updates
 
     player.update()
