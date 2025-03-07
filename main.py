@@ -47,16 +47,16 @@ class SpriteSheet(object):
 def background_check():
     for background in all_backgrounds_list():
         if background.rect.y >= 0:
-            background2 = Background(current_state)
             all_backgrounds_list.remove(background)
             all_sprites_list.remove(background)
+            background = Background(current_state)
 
 def road_check():
     for road in all_roads_list():
         if road.rect.y >= 0:
-            road2 = Road(current_state)
             all_roads_list.remove(road)
             all_sprites_list.remove(road)
+            road = Road(current_state)
 
 def state_check():
     global current_state
@@ -75,7 +75,7 @@ def generate_map(map_list):
     map_list.appendleft(5)
     map_list.appendleft(6)
     for x in range(1,5):
-        map_list.appendleftd(1)
+        map_list.appendleft(1)
 
 
 # class definitions
@@ -96,6 +96,7 @@ class Player(pygame.sprite.Sprite):
         self.A = False
         self.S = False
         self.D = False
+         
     def update(self):
 
         # vertical movement checks
@@ -120,17 +121,29 @@ class Player(pygame.sprite.Sprite):
         elif self.A == False and self.D == True:
             self.xspeed = self.speed
 
+        global player_mask_image
+        global road_mask_image
+
         # location update
         
+        global overlap_area
+        global scroll_speed
+
+        if overlap_area != 6310:
+            if scroll_speed > 1:
+                scroll_speed -= 0.1
+            if self.yspeed > 0:
+                self.yspeed =- 1
+
         self.rect.x += self.xspeed
         self.rect.y += self.yspeed
 
         # check for screen borders
 
-        if self.rect.x + self.width >= screen_width - 228:
-            self.rect.x = screen_width - self.width - 228
-        if self.rect.x <= 228:
-            self.rect.x = 228
+        # if self.rect.x + self.width >= screen_width - 228:
+            # self.rect.x = screen_width - self.width - 228
+        # if self.rect.x <= 228:
+            # self.rect.x = 228
         
         if self.rect.y + self.height >= screen_height:
             self.rect.y = screen_height - self.height
@@ -227,7 +240,7 @@ player = Player(BLUE, 100, 100)
 all_sprites_list.add(player)
 all_players_list.add(player)
 layer6.add(player)
-player.rect.x = 0
+player.rect.x = 472
 player.rect.y = 534
 
 ## background definition
@@ -248,7 +261,9 @@ layer2.add(road)
 road.rect.x = 0
 road.rect.y = 0
 
-# function definitions
+# invisible mouse
+
+pygame.mouse.set_visible(False)
 
 # file definitions
 
@@ -272,6 +287,8 @@ while not done:
                 player.A = True
             elif event.key == pygame.K_d:
                 player.D = True
+            elif event.key == pygame.K_ESCAPE:
+                done = True
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_w:
                 player.W = False
@@ -281,6 +298,21 @@ while not done:
                 player.A = False
             elif event.key == pygame.K_d:
                 player.D = False
+
+    # sprite masks
+    
+    # background_mask = pygame.mask.from_surface(background.image)
+    # background_mask_image = background_mask.to_surface()
+
+    player_mask = pygame.mask.from_surface(player.image)
+    player_mask_image = player_mask.to_surface()
+
+    road_mask = pygame.mask.from_surface(road.image)
+    road_mask_image = road_mask.to_surface()
+
+    overlap_area = player_mask.overlap_area(road_mask, (road.rect.x - player.rect.x, road.rect.y - player.rect.y))
+
+    print(overlap_area)
 
     # distance increment
 
@@ -317,6 +349,10 @@ while not done:
     layer8.draw(screen)
     layer9.draw(screen)
     layer10.draw(screen)
+
+    # screen.blit(player_mask_image, (0, 0))
+    # screen.blit(road_mask_image, (0,0))
+    # screen.blit(background_mask_image, (0,0))
 
     # screen update
 
