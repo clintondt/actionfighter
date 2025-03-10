@@ -27,24 +27,32 @@ clock = pygame.time.Clock()
 
 current_state = 1
 
+max_speed = 10
+
 # general function definitions
 
 def get_image(self, x, y, width, height):
+        
         image = pygame.Surface([width, height]).convert()
         image.blit(self.sprite_sheet, (0, 0), (x, y, width, height))
         image.set_colorkey(KEY)
         return image
 
 class SpriteSheet(object):
+
     def __init__(self, file_name):
+
         self.sprite_sheet = pygame.image.load(file_name).convert()
+
     def get_image(self, x, y, width, height):
+
         image = pygame.Surface([width, height]).convert()
         image.blit(self.sprite_sheet, (0, 0), (x, y, width, height))
         image.set_colorkey(KEY)
         return image
 
 def background_check():
+
     for background in all_backgrounds_list():
         if background.rect.y >= 0:
             all_backgrounds_list.remove(background)
@@ -52,6 +60,7 @@ def background_check():
             background = Background(current_state)
 
 def road_check():
+
     for road in all_roads_list():
         if road.rect.y >= 0:
             all_roads_list.remove(road)
@@ -59,6 +68,7 @@ def road_check():
             road = Road(current_state)
 
 def state_check():
+
     global current_state
     if distance > 100:
         rand_1 = random.randint(1,100)
@@ -66,6 +76,7 @@ def state_check():
             current_state = 2
 
 def generate_map(map_list):
+
     for x in range(1,5):
         map_list.appendleft(1)
     map_list.appendleft(2)
@@ -77,25 +88,31 @@ def generate_map(map_list):
     for x in range(1,5):
         map_list.appendleft(1)
 
-
 # class definitions
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, color, width, height):
+
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface([width, height])
-        player = SpriteSheet("spritesheet.png")
+        
         self.width = 80
         self.height = 100
+
+        player = SpriteSheet("sprites/spritesheet.png")
         self.image = player.get_image(0,0,self.width,self.height)
         self.rect = self.image.get_rect()
+
         self.xspeed = 0
         self.yspeed = 0
         self.speed = 4
+
         self.W = False
         self.A = False
         self.S = False
         self.D = False
+
+        self.bullets = 2
          
     def update(self):
 
@@ -106,9 +123,9 @@ class Player(pygame.sprite.Sprite):
         elif self.W == True and self.S == True:
             self.yspeed = 0
         elif self.W == True and self.S == False:
-            self.yspeed = -self.speed
+            self.yspeed = -abs(self.speed)
         elif self.W == False and self.S == True:
-            self.yspeed = self.speed
+            self.yspeed = abs(self.speed)
         
         # horizontal movement checks
 
@@ -133,17 +150,17 @@ class Player(pygame.sprite.Sprite):
             if scroll_speed > 1:
                 scroll_speed -= 0.1
             if self.yspeed > 0:
-                self.yspeed =- 1
+                self.speed = 4 * scroll_speed
 
         self.rect.x += self.xspeed
         self.rect.y += self.yspeed
 
         # check for screen borders
 
-        # if self.rect.x + self.width >= screen_width - 228:
-            # self.rect.x = screen_width - self.width - 228
-        # if self.rect.x <= 228:
-            # self.rect.x = 228
+        if self.rect.x + self.width >= screen_width:
+            self.rect.x = screen_width - self.width
+        # if self.rect.x < screen_width:
+            # self.rect.x = screen_width
         
         if self.rect.y + self.height >= screen_height:
             self.rect.y = screen_height - self.height
@@ -151,52 +168,82 @@ class Player(pygame.sprite.Sprite):
             self.rect.y = 0
 
 class Background(pygame.sprite.Sprite):
+
     def __init__(self):
+
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface([1024, 1536])
         if current_state == 1:
-            background = SpriteSheet("grass1.png")
+            background = SpriteSheet("sprites/backgrounds/grass1.png")
         self.image = background.get_image(0,0,1024,1536)
         self.rect = self.image.get_rect()
+
     def update(self):
+
         global scroll_speed
         self.rect.y += scroll_speed
         if self.rect.y > 0:
             self.rect.y = -768
 
 class Road(pygame.sprite.Sprite):
+
     def __init__(self):
+
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface([1024, 1536])
-        background = SpriteSheet("road.png")
+        background = SpriteSheet("sprites/roads/road.png")
         self.image = background.get_image(0,0,1024,1536)
         self.rect = self.image.get_rect()
+
     def update(self):
+
         global scroll_speed
         self.rect.y += scroll_speed
+
         if self.rect.y > 0:
+
             self.gen()
             self.rect.y = -768
+
     def gen(self):
+
         next = map_list.pop()
+        
         if next == 1:
-            background = SpriteSheet("road.png")
+            background = SpriteSheet("sprites/roads/road.png")
             self.image = background.get_image(0,0,1024,1536)
         elif next == 2:
-            background = SpriteSheet("road2.png")
+            background = SpriteSheet("sprites/roads/road2.png")
             self.image = background.get_image(0,0,1024,1536)
         elif next == 3:
-            background = SpriteSheet("road3.png")
+            background = SpriteSheet("sprites/roads/road3.png")
             self.image = background.get_image(0,0,1024,1536)
         elif next == 4:
-            background = SpriteSheet("road4.png")
+            background = SpriteSheet("sprites/roads/road4.png")
             self.image = background.get_image(0,0,1024,1536)
         elif next == 5:
-            background = SpriteSheet("road5.png")
+            background = SpriteSheet("sprites/roads/road5.png")
             self.image = background.get_image(0,0,1024,1536)
         elif next == 6:
-            background = SpriteSheet("road6.png")
+            background = SpriteSheet("sprites/roads/road6.png")
             self.image = background.get_image(0,0,1024,1536)
+
+class Bullet(pygame.sprite.Sprite):
+
+    def __init__(self):
+
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface([10, 20])
+        bullet = SpriteSheet("sprites/spritesheet.png")
+        self.image = bullet.get_image(80,0,10,20)
+        self.rect = self.image.get_rect()
+
+        global scroll_speed
+        self.speed = scroll_speed
+
+    def update(self):
+
+        self.rect.y -= self.speed
 
 # screen definition
 
@@ -216,6 +263,7 @@ all_sprites_list = pygame.sprite.Group()
 all_backgrounds_list = pygame.sprite.Group()
 all_players_list = pygame.sprite.Group()
 all_roads_list = pygame.sprite.Group()
+all_bullets_list = pygame.sprite.Group()
 
 # layer group definitions
 
@@ -225,7 +273,7 @@ layer1 = pygame.sprite.Group() # background
 layer2 = pygame.sprite.Group()
 layer3 = pygame.sprite.Group()
 layer4 = pygame.sprite.Group()
-layer5 = pygame.sprite.Group()
+layer5 = pygame.sprite.Group() # bullets
 layer6 = pygame.sprite.Group() # player
 layer7 = pygame.sprite.Group()
 layer8 = pygame.sprite.Group()
@@ -289,6 +337,33 @@ while not done:
                 player.D = True
             elif event.key == pygame.K_ESCAPE:
                 done = True
+            elif event.key == pygame.K_SPACE and distance > 10:
+
+                if player.bullets == 1:
+
+                    bullet = Bullet()
+                    bullet.rect.x = player.rect.x + 35
+                    bullet.rect.y = player.rect.y
+                    all_bullets_list.add(bullet)
+                    all_sprites_list.add(bullet)
+                    layer5.add(bullet)
+
+                elif player.bullets == 2:
+
+                    bullet = Bullet()
+                    bullet.rect.x = player.rect.x + 60
+                    bullet.rect.y = player.rect.y
+                    all_bullets_list.add(bullet)
+                    all_sprites_list.add(bullet)
+                    layer5.add(bullet)
+
+                    bullet = Bullet()
+                    bullet.rect.x = player.rect.x + 10
+                    bullet.rect.y = player.rect.y
+                    all_bullets_list.add(bullet)
+                    all_sprites_list.add(bullet)
+                    layer5.add(bullet)
+
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_w:
                 player.W = False
@@ -312,11 +387,13 @@ while not done:
 
     overlap_area = player_mask.overlap_area(road_mask, (road.rect.x - player.rect.x, road.rect.y - player.rect.y))
 
-    print(overlap_area)
+    # print(overlap_area)
 
     # distance increment
 
-    distance += 1
+    distance += scroll_speed
+
+    print(int(distance // 100))
 
     # state check
 
@@ -330,9 +407,12 @@ while not done:
 
     road.update()
 
+    for bullet in all_bullets_list:
+        bullet.update()
+
     # scroll speed update
 
-    if scroll_speed < 10:
+    if scroll_speed < max_speed:
             scroll_speed += 0.05
 
     # screen drawing
