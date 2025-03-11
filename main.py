@@ -149,8 +149,10 @@ class Player(pygame.sprite.Sprite):
         if overlap_area != 6310:
             if scroll_speed > 1:
                 scroll_speed -= 0.1
-            if self.yspeed > 0:
-                self.speed = 4 * scroll_speed
+            # if self.yspeed > 0:
+                # self.yspeed = scroll_speed / 2
+            # elif  self.yspeed < 0:
+                # self.yspeed = - scroll_speed / 2
 
         self.rect.x += self.xspeed
         self.rect.y += self.yspeed
@@ -243,7 +245,8 @@ class Bullet(pygame.sprite.Sprite):
 
     def update(self):
 
-        self.rect.y -= self.speed
+        global max_speed
+        self.rect.y -= max_speed
 
 # screen definition
 

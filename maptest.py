@@ -1,0 +1,1 @@
+import mapgraph from mapgen.py
