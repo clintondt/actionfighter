@@ -4,7 +4,7 @@ import random
 import time
 from collections import deque
 
-mapgraph = {
+map_graph = {
 
     # 1 to x
     
@@ -30,5 +30,10 @@ mapgraph = {
     "2lr2rm": ["2rm"],
     "2lr2lm": ["2lm"],
     "2rm2lm": ["2lm"],
-    
+    "2lr1l": ["1l"],
+    "2lr1r": ["1r"],
+    "2lm1m": ["1m"],
+    "2lm1l": ["1l"],
+    "2rm1m": ["1m"],
+    "2rm1r": ["1r"],
 }
