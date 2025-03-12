@@ -53,19 +53,11 @@ class SpriteSheet(object):
 
 def background_check():
 
-    for background in all_backgrounds_list():
+    for background in all_backgrounds_list:
         if background.rect.y >= 0:
             all_backgrounds_list.remove(background)
             all_sprites_list.remove(background)
             background = Background(current_state)
-
-# def road_check():
-
-    # for road in all_roads_list():
-        #if road.rect.y >= 0:
-         #   all_roads_list.remove(road)
-          #  all_sprites_list.remove(road)
-           # road = Road(current_state)
 
 def state_check():
 
@@ -179,22 +171,21 @@ class Road(pygame.sprite.Sprite):
     def __init__(self):
 
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface([1024, 1536])
-        background = SpriteSheet("sprites/roads/road.png")
-        self.image = background.get_image(0,0,1024,1536)
+        self.image = pygame.Surface([1024, 768])
+        self.gen()
         self.rect = self.image.get_rect()
 
         self.nextdone = False
+
+        self.num = 0
 
     def update(self):
 
         global scroll_speed
         self.rect.y += scroll_speed
-
-        # if self.rect.y > 0:
-
-            # self.gen()
-            # self.rect.y = -768
+        if self.rect.y >= screen_height:
+            self.gen()
+            self.rect.y = - 768
 
     def gen(self):
 
@@ -202,16 +193,16 @@ class Road(pygame.sprite.Sprite):
         
         if next == 1:
             background = SpriteSheet("sprites/roads/road.png")
-            self.image = background.get_image(0,0,1024,1536)
+            self.image = background.get_image(0,0,1024,768)
         elif next == 2:
             background = SpriteSheet("sprites/roads/road2.png")
-            self.image = background.get_image(0,0,1024,1536)
+            self.image = background.get_image(0,0,1024,768)
         elif next == 3:
             background = SpriteSheet("sprites/roads/road3.png")
-            self.image = background.get_image(0,0,1024,1536)
+            self.image = background.get_image(0,0,1024,768)
         elif next == 4:
             background = SpriteSheet("sprites/roads/road4.png")
-            self.image = background.get_image(0,0,1024,1536)
+            self.image = background.get_image(0,0,1024,768)
 
 class Bullet(pygame.sprite.Sprite):
 
@@ -242,14 +233,15 @@ pygame.display.set_caption("Action Fighter Game")
 
 map_list = deque()
 for x in range(0,5):
-    map_list.append(1)
-map_list.append(2)
+    map_list.appendleft(1)
+map_list.appendleft(2)
 for x in range(0,5):
-    map_list.append(3)
-map_list.append(4)
+    map_list.appendleft(3)
+map_list.appendleft(4)
 for x in range(0,5):
-    map_list.append(1)
+    map_list.appendleft(1)
 
+print(map_list)
 
 # sprite group definitions
 
@@ -302,6 +294,7 @@ all_roads_list.add(road)
 layer2.add(road)
 road.rect.x = 0
 road.rect.y = 0
+road.num = 1
 
 road2 = Road()
 all_sprites_list.add(road2)
@@ -309,6 +302,7 @@ all_roads_list.add(road2)
 layer2.add(road2)
 road2.rect.x = 0
 road2.rect.y = -768
+road2.num = 2
 
 # invisible mouse
 
@@ -415,10 +409,10 @@ while not done:
     
     # road update
 
-    for road in all_roads_list:
-        if road.rect.y >= screen_height:
-            road.rect.y = -road.rect.height
-            road.gen()
+    #if road2.rect.y > road.rect.y:
+    #    road.rect.y = road2.rect.y - road.rect.height
+    #elif road.rect.y > road2.rect.y:
+    #    road2.rect.y = road.rect.y - road2.rect.height
 
     # sprite updates
 
@@ -451,7 +445,6 @@ while not done:
     layer8.draw(screen)
     layer9.draw(screen)
     layer10.draw(screen)
-
 
     # screen.blit(combined_road_mask_image, (0,0))
     # screen.blit(player_mask_image, (0, 0))
