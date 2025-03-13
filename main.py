@@ -118,7 +118,6 @@ class Player(pygame.sprite.Sprite):
             self.xspeed = self.speed
 
         global player_mask_image
-        global road_mask_image
 
         # location update
         
@@ -128,10 +127,6 @@ class Player(pygame.sprite.Sprite):
         if overlap_area != 6310:
             if scroll_speed > 1:
                 scroll_speed -= 0.1
-            # if self.yspeed > 0:
-                # self.yspeed = scroll_speed / 2
-            # elif  self.yspeed < 0:
-                # self.yspeed = - scroll_speed / 2
 
         self.rect.x += self.xspeed
         self.rect.y += self.yspeed
@@ -140,8 +135,8 @@ class Player(pygame.sprite.Sprite):
 
         if self.rect.x + self.width >= screen_width:
             self.rect.x = screen_width - self.width
-        # if self.rect.x < screen_width:
-            # self.rect.x = screen_width
+        if self.rect.x < 0:
+            self.rect.x = 0
         
         if self.rect.y + self.height >= screen_height:
             self.rect.y = screen_height - self.height
@@ -184,8 +179,9 @@ class Road(pygame.sprite.Sprite):
         global scroll_speed
         self.rect.y += scroll_speed
         if self.rect.y >= screen_height:
+            self.rect.y = - self.rect.height
             self.gen()
-            self.rect.y = - 768
+
 
     def gen(self):
 
@@ -241,7 +237,7 @@ map_list.appendleft(4)
 for x in range(0,5):
     map_list.appendleft(1)
 
-print(map_list)
+# print(map_list)
 
 # sprite group definitions
 
@@ -301,7 +297,7 @@ all_sprites_list.add(road2)
 all_roads_list.add(road2)
 layer2.add(road2)
 road2.rect.x = 0
-road2.rect.y = -768
+road2.rect.y = - road2.rect.height
 road2.num = 2
 
 # invisible mouse
@@ -409,10 +405,10 @@ while not done:
     
     # road update
 
-    #if road2.rect.y > road.rect.y:
-    #    road.rect.y = road2.rect.y - road.rect.height
-    #elif road.rect.y > road2.rect.y:
-    #    road2.rect.y = road.rect.y - road2.rect.height
+    for road in all_roads_list:
+        if road.rect.y >= screen_height:
+            road.rect.y = -road.rect.height
+            road.gen()
 
     # sprite updates
 
@@ -430,7 +426,7 @@ while not done:
 
     if scroll_speed < max_speed:
             scroll_speed += 0.05
-
+    
     # screen drawing
 
     screen.fill(BLACK)
