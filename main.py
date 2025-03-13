@@ -173,13 +173,16 @@ class Road(pygame.sprite.Sprite):
         self.nextdone = False
 
         self.num = 0
+        self.y_float = 0
 
     def update(self):
 
         global scroll_speed
-        self.rect.y += scroll_speed
+        self.y_float += scroll_speed
+        self.rect.y = int(self.y_float)
         if self.rect.y >= screen_height:
-            self.rect.y = - self.rect.height
+            self.y_float = -768
+            self.rect.y = -768
             self.gen()
 
 
@@ -290,6 +293,7 @@ all_roads_list.add(road)
 layer2.add(road)
 road.rect.x = 0
 road.rect.y = 0
+road.y_float = 0
 road.num = 1
 
 road2 = Road()
@@ -297,7 +301,8 @@ all_sprites_list.add(road2)
 all_roads_list.add(road2)
 layer2.add(road2)
 road2.rect.x = 0
-road2.rect.y = - road2.rect.height
+road2.rect.y = -768
+road2.y_float = -768
 road2.num = 2
 
 # invisible mouse
@@ -405,10 +410,12 @@ while not done:
     
     # road update
 
-    for road in all_roads_list:
-        if road.rect.y >= screen_height:
-            road.rect.y = -road.rect.height
-            road.gen()
+    #for road in all_roads_list:
+    #    if road.rect.y >= 768:
+    #        road.rect.y = - 768
+    #        road.gen()
+
+    
 
     # sprite updates
 
@@ -425,8 +432,14 @@ while not done:
     # scroll speed update
 
     if scroll_speed < max_speed:
-            scroll_speed += 0.05
+        scroll_speed = round(scroll_speed + 0.05, 2)
     
+    print(scroll_speed)
+
+
+    print(road.rect.y)
+    print(road2.rect.y)
+
     # screen drawing
 
     screen.fill(BLACK)
