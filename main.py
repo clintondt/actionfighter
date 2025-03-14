@@ -21,7 +21,7 @@ done = False
 
 distance = 0
 
-scroll_speed = 0
+scroll_speed = 10
 
 clock = pygame.time.Clock()
 
@@ -122,9 +122,10 @@ class Player(pygame.sprite.Sprite):
         # location update
         
         global overlap_area
+        global overlap_area2
         global scroll_speed
 
-        if overlap_area != 6310:
+        if overlap_area != 6310 and overlap_area2 != 6310:
             if scroll_speed > 1:
                 scroll_speed -= 0.1
 
@@ -153,13 +154,16 @@ class Background(pygame.sprite.Sprite):
             background = SpriteSheet("sprites/backgrounds/grass1.png")
         self.image = background.get_image(0,0,1024,1536)
         self.rect = self.image.get_rect()
+        self.y_float = 0
 
     def update(self):
 
         global scroll_speed
-        self.rect.y += scroll_speed
+        self.y_float += scroll_speed
+        self.rect.y = round(self.y_float)
         if self.rect.y > 0:
             self.rect.y = -768
+            self.y_float = -768
 
 class Road(pygame.sprite.Sprite):
 
@@ -179,10 +183,10 @@ class Road(pygame.sprite.Sprite):
 
         global scroll_speed
         self.y_float += scroll_speed
-        self.rect.y = int(self.y_float)
+        self.rect.y = round(self.y_float)
         if self.rect.y >= screen_height:
-            self.y_float = -768
-            self.rect.y = -768
+            self.y_float = -768 + scroll_speed
+            self.rect.y = round(self.y_float)
             self.gen()
 
 
@@ -192,16 +196,16 @@ class Road(pygame.sprite.Sprite):
         
         if next == 1:
             background = SpriteSheet("sprites/roads/road.png")
-            self.image = background.get_image(0,0,1024,768)
+            self.image = background.get_image(0,0,1024,780)
         elif next == 2:
             background = SpriteSheet("sprites/roads/road2.png")
-            self.image = background.get_image(0,0,1024,768)
+            self.image = background.get_image(0,0,1024,780)
         elif next == 3:
             background = SpriteSheet("sprites/roads/road3.png")
-            self.image = background.get_image(0,0,1024,768)
+            self.image = background.get_image(0,0,1024,780)
         elif next == 4:
             background = SpriteSheet("sprites/roads/road4.png")
-            self.image = background.get_image(0,0,1024,768)
+            self.image = background.get_image(0,0,1024,780)
 
 class Bullet(pygame.sprite.Sprite):
 
@@ -378,29 +382,30 @@ while not done:
     player_mask = pygame.mask.from_surface(player.image)
     player_mask_image = player_mask.to_surface()
 
-    # road_mask = pygame.mask.from_surface(road.image)
-    # road_mask_image = road_mask.to_surface()
+    road_mask = pygame.mask.from_surface(road.image)
+    road_mask_image = road_mask.to_surface(dest=(road.rect.x, road.rect.y))
 
-    # road_mask2 = pygame.mask.from_surface(road2.image)
-    # road_mask_image2 = road_mask2.to_surface()
+    road_mask2 = pygame.mask.from_surface(road2.image)
+    road_mask_image2 = road_mask2.to_surface(dest=(road2.rect.x, road2.rect.y))
 
-    combined_road_surface = pygame.Surface((screen_width, screen_height * 2)).convert()
-    combined_road_surface.fill((0,0,0))
-    combined_road_surface.blit(road.image, road.rect.topleft)
-    combined_road_surface.blit(road2.image, road2.rect.topleft)
+    #combined_road_surface = pygame.Surface((screen_width, screen_height * 2))
+    #combined_road_surface.fill((0,0,0))
+    #combined_road_surface.blit(road.image, road.rect.topleft)
+    #combined_road_surface.blit(road2.image, road2.rect.topleft)
 
-    combined_road_mask = pygame.mask.from_surface(combined_road_surface)
-    combined_road_mask_image = combined_road_mask.to_surface()
+    #combined_road_mask = pygame.mask.from_surface(combined_road_surface)
+    #combined_road_mask_image = combined_road_mask.to_surface()
 
-    overlap_area = player_mask.overlap_area(combined_road_mask, (0, 0))
+    #overlap_area = player_mask.overlap_area(combined_road_mask, (0, 0))
 
-    # overlap_area = player_mask.overlap_area(road_mask, (road.rect.x - player.rect.x, road.rect.y - player.rect.y))
+    overlap_area = player_mask.overlap_area(road_mask, (road.rect.x - player.rect.x, road.rect.y - player.rect.y))
+    overlap_area2 = player_mask.overlap_area(road_mask2, (road2.rect.x - player.rect.x, road2.rect.y - player.rect.y))
 
-    # print(overlap_area)
+    print(overlap_area, overlap_area2)
 
     # distance increment
 
-    distance += scroll_speed
+    distance += int(scroll_speed)
 
     # print(int(distance // 100))
 
@@ -414,8 +419,6 @@ while not done:
     #    if road.rect.y >= 768:
     #        road.rect.y = - 768
     #        road.gen()
-
-    
 
     # sprite updates
 
@@ -432,13 +435,12 @@ while not done:
     # scroll speed update
 
     if scroll_speed < max_speed:
-        scroll_speed = round(scroll_speed + 0.05, 2)
+        scroll_speed = round(scroll_speed + 0.05, 3)
     
-    print(scroll_speed)
+    #print(scroll_speed)
 
-
-    print(road.rect.y)
-    print(road2.rect.y)
+    #print(road.rect.y, road.rect.x)
+    #print(road2.rect.y, road2.rect.x)
 
     # screen drawing
 
@@ -457,7 +459,8 @@ while not done:
 
     # screen.blit(combined_road_mask_image, (0,0))
     # screen.blit(player_mask_image, (0, 0))
-    # screen.blit(road_mask_image, (0,0))
+    screen.blit(road_mask_image, (0,0))
+    screen.blit(road_mask_image2, (0,0))
     # screen.blit(background_mask_image, (0,0))
 
     # screen update
