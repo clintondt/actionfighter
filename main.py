@@ -167,7 +167,7 @@ class Background(pygame.sprite.Sprite):
 
 class Road(pygame.sprite.Sprite):
 
-    def __init__(self):
+    def __init__(self, y_position):
 
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface([1024, 768])
@@ -177,7 +177,7 @@ class Road(pygame.sprite.Sprite):
         self.nextdone = False
 
         self.num = 0
-        self.y_float = 0
+        self.y_float = y_position
 
     def update(self):
         global scroll_speed
@@ -185,12 +185,9 @@ class Road(pygame.sprite.Sprite):
         self.rect.y = round(self.y_float)
 
         if self.rect.y >= screen_height:
-            # Find the highest road (lowest y_float) among the others.
-            other_roads = [road for road in all_roads_list if road != self]
-            if other_roads:
-                highest_y = min(road.y_float for road in other_roads)
-                self.y_float = highest_y - self.rect.height
-                self.rect.y = round(self.y_float)
+            highest_y = min(road.y_float for road in all_roads_list if road != self)
+            self.y_float = highest_y - 768
+            self.rect.y = round(self.y_float)
             self.gen()
 
     def gen(self):
@@ -306,25 +303,29 @@ background.rect.y = 0
 
 ## road definition
 
-road = Road()
-all_sprites_list.add(road)
-all_roads_list.add(road)
-layer2.add(road)
-road.rect.x = 0
-road.rect.y = 0
-road.y_float = 0
-road.num = 1
-road.gen()
+road1 = Road(0)
+# all_sprites_list.add(road)
+# all_roads_list.add(road)
+# layer2.add(road)
+# road.rect.x = 0
+# road.rect.y = 0
+# road.y_float = 0
+# road.num = 1
+# road.gen()
 
-road2 = Road()
-all_sprites_list.add(road2)
-all_roads_list.add(road2)
-layer2.add(road2)
-road2.rect.x = 0
-road2.rect.y = -768
-road2.y_float = -768
-road2.num = 2
-road2.gen()
+road2 = Road(-768)
+# all_sprites_list.add(road2)
+# all_roads_list.add(road2)
+# layer2.add(road2)
+# road2.rect.x = 0
+# road2.rect.y = -768
+# road2.y_float = -768
+# road2.num = 2
+# road2.gen()
+
+all_sprites_list.add(road1, road2)
+all_roads_list.add(road1, road2)
+layer2.add(road1, road2)
 
 # invisible mouse
 
@@ -397,7 +398,7 @@ while not done:
     player_mask_image = player_mask.to_surface()
 
     # road 1 mask
-    road_mask = pygame.mask.from_surface(road.image)
+    road_mask = pygame.mask.from_surface(road1.image)
     road_mask_image = road_mask.to_surface()
     road_mask_image.set_colorkey(BLACK)
 
@@ -408,8 +409,8 @@ while not done:
 
     # road offsets
 
-    offset_x = road.rect.x - player.rect.x
-    offset_y = road.rect.y - player.rect.y
+    offset_x = road1.rect.x - player.rect.x
+    offset_y = road1.rect.y - player.rect.y
     overlap_area = player_mask.overlap_area(road_mask, (offset_x, offset_y))
 
     offset_x2 = road2.rect.x - player.rect.x
@@ -426,10 +427,10 @@ while not done:
 
     #overlap_area = player_mask.overlap_area(combined_road_mask, (0, 0))
 
-    overlap_area = player_mask.overlap_area(road_mask, (road.rect.x - player.rect.x, road.rect.y - player.rect.y))
+    overlap_area = player_mask.overlap_area(road_mask, (road1.rect.x - player.rect.x, road1.rect.y - player.rect.y))
     overlap_area2 = player_mask.overlap_area(road_mask2, (road2.rect.x - player.rect.x, road2.rect.y - player.rect.y))
 
-    print(f"Road 1: y={road.rect.y}, y_float={road.y_float}")
+    print(f"Road 1: y={road1.rect.y}, y_float={road1.y_float}")
     print(f"Road 2: y={road2.rect.y}, y_float={road2.y_float}")
     print(f"Map List: {list(map_list)}")
 
@@ -489,8 +490,8 @@ while not done:
 
     # screen.blit(combined_road_mask_image, (0,0))
     # screen.blit(player_mask_image, (0, 0))
-    screen.blit(road_mask_image, road.rect.topleft)  
-    screen.blit(road_mask_image2, road2.rect.topleft)
+    # screen.blit(road_mask_image, road1.rect.topleft)
+    # screen.blit(road_mask_image2, road2.rect.topleft)
     # screen.blit(background_mask_image, (0,0))
 
     # screen update
