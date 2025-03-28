@@ -4,7 +4,11 @@ import pygame
 import math
 import random
 import time
+
 from collections import deque
+
+from mapgen import road_images
+from mapgen2 import mapgenerate
 
 # color definitions
 
@@ -89,7 +93,7 @@ class Player(pygame.sprite.Sprite):
         self.W = False
         self.A = False
         self.S = False
-        self.D = False
+        self.D = False 
 
         self.bullets = 2
          
@@ -194,30 +198,23 @@ class Road(pygame.sprite.Sprite):
 
         global map_list
 
-        if not map_list:
-            for x in range(0, 5):
-                map_list.appendleft(1)
-            map_list.appendleft(2)
-            for x in range(0, 5):
-                map_list.appendleft(3)
-            map_list.appendleft(4)
-            for x in range(0, 5):
-                map_list.appendleft(1)
+        if len(map_list) == 0:
+            map_list.extend(mapgenerate("1m",10))
 
-        next = map_list.pop()
+        current_road = map_list.popleft()
         
-        if next == 1:
-            background = SpriteSheet("sprites/roads/road.png")
-            self.image = background.get_image(0,0,1024,780)
-        elif next == 2:
-            background = SpriteSheet("sprites/roads/road2.png")
-            self.image = background.get_image(0,0,1024,780)
-        elif next == 3:
-            background = SpriteSheet("sprites/roads/road3.png")
-            self.image = background.get_image(0,0,1024,780)
-        elif next == 4:
-            background = SpriteSheet("sprites/roads/road4.png")
-            self.image = background.get_image(0,0,1024,780)
+        # road_images = {
+        #     "1m": "sprites/roads/1m.png",
+        #     "1m2lr": "sprites/roads/1m2lr.png",
+        #     "2lr": "sprites/roads/2lr.png",
+        #     "2lr1m": "sprites/roads/2lr1m.png"
+        #     "
+        # }
+
+        global road_images
+
+        background = SpriteSheet(road_images[current_road])
+        self.image = background.get_image(0,0,1024,780)
 
 class Bullet(pygame.sprite.Sprite):
 
@@ -247,14 +244,8 @@ pygame.display.set_caption("Action Fighter Game")
 # map generation function
 
 map_list = deque()
-for x in range(0,5):
-    map_list.appendleft(1)
-map_list.appendleft(2)
-for x in range(0,5):
-    map_list.appendleft(3)
-map_list.appendleft(4)
-for x in range(0,5):
-    map_list.appendleft(1)
+# map_list.extend([1, 1, 1, 1, 1, 2, 3, 3, 3, 3, 3, 4, 1, 1, 1, 1, 1])
+map_list.extend(mapgenerate("1m", 10))
 
 # print(map_list)
 
@@ -336,6 +327,8 @@ pygame.mouse.set_visible(False)
 pygame.init()
 
 # main code
+
+# print(mapgenerate("2lr", 10))
 
 while not done:
     
@@ -430,9 +423,9 @@ while not done:
     overlap_area = player_mask.overlap_area(road_mask, (road1.rect.x - player.rect.x, road1.rect.y - player.rect.y))
     overlap_area2 = player_mask.overlap_area(road_mask2, (road2.rect.x - player.rect.x, road2.rect.y - player.rect.y))
 
-    print(f"Road 1: y={road1.rect.y}, y_float={road1.y_float}")
-    print(f"Road 2: y={road2.rect.y}, y_float={road2.y_float}")
-    print(f"Map List: {list(map_list)}")
+    # print(f"Road 1: y={road1.rect.y}, y_float={road1.y_float}")
+    # print(f"Road 2: y={road2.rect.y}, y_float={road2.y_float}")
+    # print(f"Map List: {list(map_list)}")
 
     # distance increment
 
