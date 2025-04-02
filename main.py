@@ -202,7 +202,7 @@ class Road(pygame.sprite.Sprite):
 
         if len(map_list) == 0:
             map_list.extend(mapgenerate(current_road,10))
-
+        
         
         
         # road_images = {
@@ -236,6 +236,33 @@ class Bullet(pygame.sprite.Sprite):
         global max_speed
         self.rect.y -= max_speed
 
+class Car(pygame.sprite.Sprite):
+
+    def __init__(self, type):
+
+        pygame.sprite.Sprite.__init__(self)
+
+        enemy = SpriteSheet("sprites/spritesheet.png")
+
+        if type == "car1":
+            self.image = enemy.get_image(90, 0, 80, 100)
+            self.rect = self.image.get_rect()
+
+class Invis(pygame.sprite.Sprite):
+
+    def __init__(self, width, height):
+
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface([width, height])
+        self.image.fill(BLACK)
+        self.image.set_colorkey(KEY)
+        self.rect = self.image.get_rect()
+
+    def update(self):
+
+        self.rect.y = 0
+
+
 # screen definition
 
 screen_width = 1024
@@ -246,7 +273,6 @@ pygame.display.set_caption("Action Fighter Game")
 # map generation function
 
 map_list = deque()
-# map_list.extend([1, 1, 1, 1, 1, 2, 3, 3, 3, 3, 3, 4, 1, 1, 1, 1, 1])
 map_list.extend(mapgenerate("1m", 10))
 
 # print(map_list)
@@ -272,7 +298,7 @@ layer6 = pygame.sprite.Group() # player
 layer7 = pygame.sprite.Group()
 layer8 = pygame.sprite.Group()
 layer9 = pygame.sprite.Group()
-layer10 = pygame.sprite.Group() 
+layer10 = pygame.sprite.Group() # invis
 
 # sprite definitions
 
@@ -319,6 +345,22 @@ road2 = Road(-768)
 all_sprites_list.add(road1, road2)
 all_roads_list.add(road1, road2)
 layer2.add(road1, road2)
+
+## enemy definition
+
+car1 = Car("car1")
+all_sprites_list.add(car1)
+layer5.add(car1)
+car1.rect.x = 200
+car1.rect.y = 0
+
+## invis definition
+
+invis = Invis(1024, 1)
+all_sprites_list.add(invis)
+# layer10.add(invis)
+invis.rect.x = 0
+invis.rect.y = 0
 
 # invisible mouse
 
@@ -427,6 +469,23 @@ while not done:
     # print(f"Road 2: y={road2.rect.y}, y_float={road2.y_float}")
     # print(f"Map List: {list(map_list)}")
 
+    # invis mask
+
+    invis_mask = pygame.mask.from_surface(invis.image)
+    invis_mask_image = invis_mask.to_surface()
+    invis_mask_image.set_colorkey(BLACK)
+    
+    # invis and road overlap
+
+    ioverlap = invis_mask.overlap(road_mask, (road1.rect.x - invis.rect.x, road1.rect.y - invis.rect.y))
+    ioverlap2 = invis_mask.overlap(road_mask2, (road2.rect.x - invis.rect.x, road2.rect.y - invis.rect.y))
+    ioverlap_area = invis_mask.overlap_area(road_mask, (road1.rect.x - invis.rect.x, road1.rect.y - invis.rect.y))
+    ioverlap2_area = invis_mask.overlap_area(road_mask2, (road2.rect.x - invis.rect.x, road2.rect.y - invis.rect.y))
+    if ioverlap:
+        print(ioverlap[0], ioverlap[0] + ioverlap_area)
+    if ioverlap2:
+        print(ioverlap2[0], ioverlap2[0] + ioverlap2_area)
+
     # distance increment
 
     distance += int(scroll_speed)
@@ -455,6 +514,8 @@ while not done:
 
     for bullet in all_bullets_list:
         bullet.update()
+
+    invis.update()
 
     # scroll speed update
 
@@ -486,6 +547,8 @@ while not done:
     # screen.blit(road_mask_image, road1.rect.topleft)
     # screen.blit(road_mask_image2, road2.rect.topleft)
     # screen.blit(background_mask_image, (0,0))
+    # screen.blit(invis_mask_image, (0,0))
+
 
     # screen update
 
