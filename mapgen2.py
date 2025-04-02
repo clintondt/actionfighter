@@ -35,7 +35,7 @@ def mapgenerate(inp, n):
     return arr
 
 
-print(mapgenerate("2lr", 10))
+# print(mapgenerate("2lr", 10))
 
 # print(len(map_graph.get(inp)))
 

@@ -198,10 +198,12 @@ class Road(pygame.sprite.Sprite):
 
         global map_list
 
-        if len(map_list) == 0:
-            map_list.extend(mapgenerate("1m",10))
-
         current_road = map_list.popleft()
+
+        if len(map_list) == 0:
+            map_list.extend(mapgenerate(current_road,10))
+
+        
         
         # road_images = {
         #     "1m": "sprites/roads/1m.png",
@@ -327,8 +329,6 @@ pygame.mouse.set_visible(False)
 pygame.init()
 
 # main code
-
-# print(mapgenerate("2lr", 10))
 
 while not done:
     
