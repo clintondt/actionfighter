@@ -8,6 +8,9 @@ import time
 from collections import deque
 
 from mapgen import road_images
+from mapgen import map_graph
+from mapgen import start_map_graph
+from mapgen import straight_map_graph
 from mapgen2 import mapgenerate
 
 # color definitions
@@ -25,13 +28,22 @@ done = False
 
 distance = 0
 
-scroll_speed = 10
+scroll_speed = 0
 
 clock = pygame.time.Clock()
 
 current_state = 1
 
 max_speed = 10
+
+mode = 1
+
+roads = 0
+
+sect = 0
+
+car_timer = 0
+car_gap = 200
 
 # general function definitions
 
@@ -70,6 +82,46 @@ def state_check():
         rand_1 = random.randint(1,100)
         if rand_1 > 80:
             current_state = 2
+
+def set_mode(m):
+    global mode
+    mode = m
+
+def sect_check():
+
+    global sect
+    global roads
+
+    if roads < 5:
+        sect = 0
+    elif roads < 50:
+        sect = 1
+    else:
+        sect = 2
+
+def car_gen():
+
+    global car_timer
+    global car_gap
+
+    if car_timer > car_gap:
+
+        r = random.randint(0, 100)
+
+        if r == 0:
+            dir = random.randint(1,2)
+            if dir == 1:
+                car = Car("car1", "up")
+                car.rect.y = screen_height
+            else:
+                car = Car("car1", "down")
+                car.rect.y = -100
+            all_sprites_list.add(car)
+            all_cars_list.add(car)
+            all_enemies_list.add(car)
+            layer0_6.add(car)
+            car.rect.x = random.randint(224, 712)
+            car_timer = 0
 
 # class definitions
 
@@ -185,6 +237,7 @@ class Road(pygame.sprite.Sprite):
 
     def update(self):
         global scroll_speed
+        global roads
         self.y_float += scroll_speed
         self.rect.y = round(self.y_float)
 
@@ -193,15 +246,25 @@ class Road(pygame.sprite.Sprite):
             self.y_float = highest_y - 768
             self.rect.y = round(self.y_float)
             self.gen()
+            roads += 1
 
     def gen(self):
 
         global map_list
+        global roads
+        global sect
 
         current_road = map_list.popleft()
 
+
+
         if len(map_list) == 0:
-            map_list.extend(mapgenerate(current_road,10))
+            if sect == 0:
+                map_list.extend(mapgenerate(start_map_graph,current_road,3))
+            elif sect == 1:
+                map_list.extend(mapgenerate(straight_map_graph,current_road,3))
+            else:
+                map_list.extend(mapgenerate(map_graph,current_road,3))
         
         
         
@@ -238,15 +301,29 @@ class Bullet(pygame.sprite.Sprite):
 
 class Car(pygame.sprite.Sprite):
 
-    def __init__(self, type):
+    def __init__(self, type, d):
 
         pygame.sprite.Sprite.__init__(self)
 
+        self.d = d
+
         enemy = SpriteSheet("sprites/spritesheet.png")
 
-        if type == "car1":
+        if d == "up":
             self.image = enemy.get_image(90, 0, 80, 100)
             self.rect = self.image.get_rect()
+        elif d == "down":
+            self.image = enemy.get_image(90, 100, 80, 100)
+            self.rect = self.image.get_rect()
+
+    def update(self):
+
+        global scroll_speed
+
+        if self.d == "up":
+            self.rect.y -= scroll_speed*0.75
+        elif self.d == "down":
+            self.rect.y += scroll_speed
 
 class Invis(pygame.sprite.Sprite):
 
@@ -262,6 +339,99 @@ class Invis(pygame.sprite.Sprite):
 
         self.rect.y = 0
 
+class MenuButton(pygame.sprite.Sprite):
+
+    def __init__(self, text, type, action):
+
+        pygame.sprite.Sprite.__init__(self)
+
+        
+        self.image = pygame.Surface([350, 80])
+        self.rect = self.image.get_rect()
+        
+        self.type = type
+        self.text = text
+        self.action = action
+        self.clicked = False
+
+        pygame.font.init()
+        self.font = pygame.font.Font("8-bit-hud.ttf", 25)
+        self.updatesprite()
+        
+    def update(self):
+
+        collides = self.rect.colliderect(mouse)
+        mouse_pressed = pygame.mouse.get_pressed()[0]
+
+        if collides:
+            self.type = 2
+            if mouse_pressed and not self.clicked:
+                self.clicked = True
+                if self.action:
+                    self.action()
+            elif not mouse_pressed:
+                self.clicked = False
+        else:
+            self.type = 1
+
+        self.updatesprite()
+
+    def updatesprite(self):
+
+        button = SpriteSheet("sprites/spritesheet.png")
+
+        if self.type == 1:
+            self.image = button.get_image(170, 0, 350, 80)
+
+        elif self.type == 2:
+            self.image = button.get_image(170, 80, 350, 80)
+
+        self.text_surface = self.font.render(self.text, True, WHITE)
+        self.text_rect = self.text_surface.get_rect(center=(self.rect.width // 2, self.rect.height // 2))
+        self.image.blit(self.text_surface, self.text_rect)
+
+
+class MenuBackground(pygame.sprite.Sprite):
+
+    def __init__(self, type):
+
+        pygame.sprite.Sprite.__init__(self)
+
+        background = SpriteSheet("sprites/menus/main_menu.png")
+
+        if type == 1:
+            self.image = background.get_image(0,0,1024,768)
+            self.rect = self.image.get_rect()
+
+class MouseObject(pygame.sprite.Sprite):
+
+    def __init__(self):
+
+        self.image = pygame.Surface([1, 1])
+        self.image.fill(BLACK)
+        self.rect = self.image.get_rect()
+
+class Logo(pygame.sprite.Sprite):
+
+    def __init__(self):
+
+        pygame.sprite.Sprite.__init__(self)
+
+        logo = SpriteSheet("sprites/spritesheet.png")
+
+        self.image = logo.get_image(520, 0, 400, 240)
+        self.rect = self.image.get_rect()
+
+class Explosion(pygame.sprite.Sprite):
+
+    def __init__(self):
+
+        pygame.sprite.Sprite.__init__(self)
+
+        exp = SpriteSheet("sprites/spritesheet.png")
+
+        self.image = exp.get_image(400, 160, 120, 120)
+        self.rect = self.image.get_rect()
 
 # screen definition
 
@@ -273,7 +443,7 @@ pygame.display.set_caption("Action Fighter Game")
 # map generation function
 
 map_list = deque()
-map_list.extend(mapgenerate("1m", 10))
+map_list.extend(mapgenerate(start_map_graph, "1m", 5))
 
 # print(map_list)
 
@@ -284,21 +454,29 @@ all_backgrounds_list = pygame.sprite.Group()
 all_players_list = pygame.sprite.Group()
 all_roads_list = pygame.sprite.Group()
 all_bullets_list = pygame.sprite.Group()
+all_buttons_list = pygame.sprite.Group()
+all_cars_list = pygame.sprite.Group()
+all_enemies_list = pygame.sprite.Group()
 
 # layer group definitions
 
 # 1 = bottom, 10 = top
 
-layer1 = pygame.sprite.Group() # background
-layer2 = pygame.sprite.Group() # road
-layer3 = pygame.sprite.Group()
-layer4 = pygame.sprite.Group()
-layer5 = pygame.sprite.Group() # bullets
-layer6 = pygame.sprite.Group() # player
-layer7 = pygame.sprite.Group()
-layer8 = pygame.sprite.Group()
-layer9 = pygame.sprite.Group()
-layer10 = pygame.sprite.Group() # invis
+layer0_1 = pygame.sprite.Group() # background
+layer0_2 = pygame.sprite.Group() # road
+layer0_3 = pygame.sprite.Group()
+layer0_4 = pygame.sprite.Group()
+layer0_5 = pygame.sprite.Group() # bullets 
+layer0_6 = pygame.sprite.Group() # player # enemies
+layer0_7 = pygame.sprite.Group()
+layer0_8 = pygame.sprite.Group()
+layer0_9 = pygame.sprite.Group()
+layer0_10 = pygame.sprite.Group() # invis
+
+layer1_1 = pygame.sprite.Group() # background
+layer1_2 = pygame.sprite.Group()
+layer1_3 = pygame.sprite.Group() # buttons
+layer1_4 = pygame.sprite.Group()
 
 # sprite definitions
 
@@ -307,7 +485,7 @@ layer10 = pygame.sprite.Group() # invis
 player = Player(BLUE, 100, 100)
 all_sprites_list.add(player)
 all_players_list.add(player)
-layer6.add(player)
+layer0_6.add(player)
 player.rect.x = 472
 player.rect.y = 534
 
@@ -316,7 +494,7 @@ player.rect.y = 534
 background = Background()
 all_sprites_list.add(background)
 all_backgrounds_list.add(background)
-layer1.add(background)
+layer0_1.add(background)
 background.rect.x = 0
 background.rect.y = 0
 
@@ -325,7 +503,7 @@ background.rect.y = 0
 road1 = Road(0)
 # all_sprites_list.add(road)
 # all_roads_list.add(road)
-# layer2.add(road)
+# layer0_2.add(road)
 # road.rect.x = 0
 # road.rect.y = 0
 # road.y_float = 0
@@ -335,7 +513,7 @@ road1 = Road(0)
 road2 = Road(-768)
 # all_sprites_list.add(road2)
 # all_roads_list.add(road2)
-# layer2.add(road2)
+# layer0_2.add(road2)
 # road2.rect.x = 0
 # road2.rect.y = -768
 # road2.y_float = -768
@@ -344,27 +522,66 @@ road2 = Road(-768)
 
 all_sprites_list.add(road1, road2)
 all_roads_list.add(road1, road2)
-layer2.add(road1, road2)
+layer0_2.add(road1, road2)
 
 ## enemy definition
 
-car1 = Car("car1")
-all_sprites_list.add(car1)
-layer5.add(car1)
-car1.rect.x = 200
-car1.rect.y = 0
+# car1 = Car("car1", "up")
+# all_sprites_list.add(car1)
+# all_cars_list.add(car1)
+# all_enemies_list.add(car1)
+# layer0_6.add(car1)
+# car1.rect.x = 512
+# car1.rect.y = screen_height
 
 ## invis definition
 
 invis = Invis(1024, 1)
 all_sprites_list.add(invis)
-# layer10.add(invis)
+# layer0_10.add(invis)
 invis.rect.x = 0
 invis.rect.y = 0
 
-# invisible mouse
+## button definitions
 
-pygame.mouse.set_visible(False)
+button1 = MenuButton("Play", 1, lambda: set_mode(0))
+button1.rect.x = 337
+button1.rect.y = 344
+layer1_3.add(button1)
+all_buttons_list.add(button1)
+
+button2 = MenuButton("Settings", 1, lambda: set_mode(2))
+button2.rect.x = 337
+button2.rect.y = 444
+layer1_3.add(button2)
+all_buttons_list.add(button2)
+
+## menu background definition
+
+menubackground1 = MenuBackground(1)
+menubackground1.rect.x = 0
+menubackground1.rect.y = 0
+layer1_1.add(menubackground1)
+
+## mouse object definition
+
+mouse = MouseObject()
+mouse.rect.x = 0
+mouse.rect.y = 0
+
+## logo definition
+
+logo = Logo()
+logo.rect.x = 312
+logo.rect.y = 84
+layer1_4.add(logo)
+
+## explosion testing
+
+# explosion = Explosion()
+# explosion.rect.x = 100
+# explosion.rect.y = 100
+# layer0_7.add(explosion)
 
 # file definitions
 
@@ -399,7 +616,7 @@ while not done:
                     bullet.rect.y = player.rect.y
                     all_bullets_list.add(bullet)
                     all_sprites_list.add(bullet)
-                    layer5.add(bullet)
+                    layer0_5.add(bullet)
 
                 elif player.bullets == 2:
 
@@ -408,14 +625,14 @@ while not done:
                     bullet.rect.y = player.rect.y
                     all_bullets_list.add(bullet)
                     all_sprites_list.add(bullet)
-                    layer5.add(bullet)
+                    layer0_5.add(bullet)
 
                     bullet = Bullet()
                     bullet.rect.x = player.rect.x + 10
                     bullet.rect.y = player.rect.y
                     all_bullets_list.add(bullet)
                     all_sprites_list.add(bullet)
-                    layer5.add(bullet)
+                    layer0_5.add(bullet)
 
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_w:
@@ -481,10 +698,10 @@ while not done:
     ioverlap2 = invis_mask.overlap(road_mask2, (road2.rect.x - invis.rect.x, road2.rect.y - invis.rect.y))
     ioverlap_area = invis_mask.overlap_area(road_mask, (road1.rect.x - invis.rect.x, road1.rect.y - invis.rect.y))
     ioverlap2_area = invis_mask.overlap_area(road_mask2, (road2.rect.x - invis.rect.x, road2.rect.y - invis.rect.y))
-    if ioverlap:
-        print(ioverlap[0], ioverlap[0] + ioverlap_area)
-    if ioverlap2:
-        print(ioverlap2[0], ioverlap2[0] + ioverlap2_area)
+    # if ioverlap:
+    #     print(ioverlap[0], ioverlap[0] + ioverlap_area)
+    # if ioverlap2:
+    #     print(ioverlap2[0], ioverlap2[0] + ioverlap2_area)
 
     # distance increment
 
@@ -505,23 +722,50 @@ while not done:
 
     # sprite updates
 
-    player.update()
+    print(roads)
 
-    background.update()
+    if mode == 0:
 
-    for road in all_roads_list:
-        road.update()
+        player.update()
 
-    for bullet in all_bullets_list:
-        bullet.update()
+        background.update()
 
-    invis.update()
+        for road in all_roads_list:
+            road.update()
 
-    # scroll speed update
+        for bullet in all_bullets_list:
+            bullet.update()
 
-    if scroll_speed < max_speed:
-        scroll_speed = round(scroll_speed + 0.05, 3)
-    
+        for car in all_cars_list:
+            car.update()
+
+        invis.update()
+
+        # scroll speed update
+
+        if scroll_speed < max_speed:
+            scroll_speed = round(scroll_speed + 0.05, 3)
+
+        # invisible mouse
+
+        pygame.mouse.set_visible(False)
+
+        sect_check()
+
+        car_timer += 1
+
+        if sect == 1:
+            car_gen()
+
+    if mode == 1:
+
+        pygame.mouse.set_visible(True)
+
+        mouse.rect.x, mouse.rect.y = pygame.mouse.get_pos()
+
+        for button in all_buttons_list:
+            button.update()
+
     #print(scroll_speed)
 
     #print(road.rect.y, road.rect.x)
@@ -531,16 +775,22 @@ while not done:
 
     screen.fill(BLACK)
 
-    layer1.draw(screen)
-    layer2.draw(screen)
-    layer3.draw(screen)
-    layer4.draw(screen)
-    layer5.draw(screen)
-    layer6.draw(screen)
-    layer7.draw(screen)
-    layer8.draw(screen)
-    layer9.draw(screen)
-    layer10.draw(screen)
+    if mode == 0:
+        layer0_1.draw(screen)
+        layer0_2.draw(screen)
+        layer0_3.draw(screen)
+        layer0_4.draw(screen)
+        layer0_5.draw(screen)
+        layer0_6.draw(screen)
+        layer0_7.draw(screen)
+        layer0_8.draw(screen)
+        layer0_9.draw(screen)
+        layer0_10.draw(screen)
+    if mode == 1:
+        layer1_1.draw(screen)
+        layer1_2.draw(screen)
+        layer1_3.draw(screen)
+        layer1_4.draw(screen)
 
     # screen.blit(combined_road_mask_image, (0,0))
     # screen.blit(player_mask_image, (0, 0))

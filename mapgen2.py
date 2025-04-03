@@ -4,7 +4,7 @@ import random
 
 # inp = str(input())
 
-def mapgenerate(inp, n):
+def mapgenerate(map_graph, inp, n):
     
     x = 0
     arr = []
