@@ -43,7 +43,11 @@ roads = 0
 sect = 0
 
 car_timer = 0
-car_gap = 200
+
+dead = False
+explosion_timer = pygame.USEREVENT + 1
+
+car_gap = 150
 
 # general function definitions
 
@@ -106,7 +110,7 @@ def car_gen():
 
     if car_timer > car_gap:
 
-        r = random.randint(0, 100)
+        r = random.randint(0, 60)
 
         if r == 0:
             dir = random.randint(1,2)
@@ -457,6 +461,7 @@ all_bullets_list = pygame.sprite.Group()
 all_buttons_list = pygame.sprite.Group()
 all_cars_list = pygame.sprite.Group()
 all_enemies_list = pygame.sprite.Group()
+player_list = pygame.sprite.Group()
 
 # layer group definitions
 
@@ -488,6 +493,7 @@ all_players_list.add(player)
 layer0_6.add(player)
 player.rect.x = 472
 player.rect.y = 534
+player_list.add(player)
 
 ## background definition
 
@@ -644,6 +650,30 @@ while not done:
             elif event.key == pygame.K_d:
                 player.D = False
 
+        elif event.type == explosion_timer:
+            pygame.time.set_timer(explosion_timer, 0)
+            
+            
+            for sprite in layer0_10:
+                if isinstance(sprite, Explosion):
+                    sprite.kill()
+            for car in all_cars_list:
+                car.kill()
+            for bullet in all_bullets_list:
+                bullet.kill()
+
+            scroll_speed = 0
+            dead = False
+            roads = 0
+            distance = 0
+            sect = 0
+            
+            player.rect.x = 472
+            player.rect.y = 534
+
+            mode = 1
+            
+
     # sprite masks
     
     player_mask = pygame.mask.from_surface(player.image)
@@ -722,11 +752,12 @@ while not done:
 
     # sprite updates
 
-    print(roads)
+    print(mode)
 
     if mode == 0:
 
-        player.update()
+        if not dead:
+            player.update()
 
         background.update()
 
@@ -738,13 +769,26 @@ while not done:
 
         for car in all_cars_list:
             car.update()
+            
+        car_kill_list = pygame.sprite.groupcollide(all_bullets_list, all_cars_list, True, True)
 
-        invis.update()
-
-        # scroll speed update
+        car_hit_list = pygame.sprite.groupcollide(all_cars_list, player_list, False, False)
 
         if scroll_speed < max_speed:
             scroll_speed = round(scroll_speed + 0.05, 3)
+
+        for car in car_hit_list:
+            scroll_speed = 0
+            exp = Explosion()
+            exp.rect.y = (car.rect.y + player.rect.y) / 2
+            exp.rect.x = (car.rect.x + player.rect.x) / 2
+            layer0_10.add(exp)
+            player.yspeed = 0
+            player.xspeed = 0
+            dead = True
+            pygame.time.set_timer(explosion_timer, 100)
+
+        invis.update()
 
         # invisible mouse
 
