@@ -24,41 +24,38 @@ KEY = (100,100,100) # invisible color
 
 # variable definitions
 
-done = False
+done = False # tracks if game running
 
-distance = 0
+distance = 0 # disntance the car has gon
 
-scroll_speed = 0
+clock = pygame.time.Clock() # initialise clock
 
-clock = pygame.time.Clock()
+max_speed = 10 # max scroll speed, in pixels per frame, breaks if > 10
+scroll_speed = 0 # current speed of the map
 
-current_state = 1
+roads = 0 # number of roads which have been generated
 
-max_speed = 10
+sect = 0 # which screen is currently displayed, info in onenote notes
+mode = 1 # game mode, info in onenote notes
+current_state = 1 # background image
 
-mode = 1
-
-roads = 0
-
-sect = 0
-
-car_timer = 0
-
-dead = False
+dead = False # tracks if the player has died
 explosion_timer = pygame.USEREVENT + 1
 
-car_gap = 150
+car_timer = 0 # amount of frames since a car has spawned
+car_gap = 150 # amount of frames before the chance of a car spawning resets
+car_spawn = 60 # 1 in x chance of spawning a car every frame
 
 # general function definitions
 
-def get_image(self, x, y, width, height):
+def get_image(self, x, y, width, height): # returns a section of an image
         
         image = pygame.Surface([width, height]).convert()
         image.blit(self.sprite_sheet, (0, 0), (x, y, width, height))
         image.set_colorkey(KEY)
         return image
 
-class SpriteSheet(object):
+class SpriteSheet(object): # loads an image to use with get_image
 
     def __init__(self, file_name):
 
@@ -71,7 +68,7 @@ class SpriteSheet(object):
         image.set_colorkey(KEY)
         return image
 
-def background_check():
+def background_check(): # ensures background contantly scrolls
 
     for background in all_backgrounds_list:
         if background.rect.y >= 0:
@@ -79,7 +76,7 @@ def background_check():
             all_sprites_list.remove(background)
             background = Background(current_state)
 
-def state_check():
+def state_check(): # doesnt currently do anything
 
     global current_state
     if distance > 100:
@@ -87,11 +84,11 @@ def state_check():
         if rand_1 > 80:
             current_state = 2
 
-def set_mode(m):
+def set_mode(m): # sets mode variable to input
     global mode
     mode = m
 
-def sect_check():
+def sect_check(): # decides which section to generate next
 
     global sect
     global roads
@@ -103,14 +100,14 @@ def sect_check():
     else:
         sect = 2
 
-def car_gen():
+def car_gen(): # randomly generates enemy cars
 
     global car_timer
     global car_gap
 
     if car_timer > car_gap:
 
-        r = random.randint(0, 60)
+        r = random.randint(0, car_spawn)
 
         if r == 0:
             dir = random.randint(1,2)
@@ -126,6 +123,13 @@ def car_gen():
             layer0_6.add(car)
             car.rect.x = random.randint(224, 712)
             car_timer = 0
+
+    # car_timer increments every frame
+    # car_gap is the mininum frames between two cars spawning
+    # car_spawn is the change of a car spawning on a certain frame
+    # car_timer resets when a car is spawned
+    # r randomly decides the cars direction, 1 = up, 2 = down
+    # the car's x position is randomly decided, in the width of 1m
 
 # class definitions
 
@@ -151,7 +155,7 @@ class Player(pygame.sprite.Sprite):
         self.S = False
         self.D = False 
 
-        self.bullets = 2
+        self.bullets = 2 # amount of bullets the player is able to shoot
          
     def update(self):
 
@@ -257,6 +261,7 @@ class Road(pygame.sprite.Sprite):
         global map_list
         global roads
         global sect
+        global current_road
 
         current_road = map_list.popleft()
 
@@ -448,6 +453,7 @@ pygame.display.set_caption("Action Fighter Game")
 
 map_list = deque()
 map_list.extend(mapgenerate(start_map_graph, "1m", 5))
+current_road = map_list[0]
 
 # print(map_list)
 
@@ -613,7 +619,7 @@ while not done:
                 player.D = True
             elif event.key == pygame.K_ESCAPE:
                 done = True
-            elif event.key == pygame.K_SPACE and distance > 10:
+            elif event.key == pygame.K_SPACE and distance > 10 and not dead:
 
                 if player.bullets == 1:
 
@@ -652,26 +658,12 @@ while not done:
 
         elif event.type == explosion_timer:
             pygame.time.set_timer(explosion_timer, 0)
-            
-            
+            print("quitting game")
             for sprite in layer0_10:
                 if isinstance(sprite, Explosion):
                     sprite.kill()
-            for car in all_cars_list:
-                car.kill()
-            for bullet in all_bullets_list:
-                bullet.kill()
-
-            scroll_speed = 0
-            dead = False
-            roads = 0
-            distance = 0
-            sect = 0
-            
-            player.rect.x = 472
-            player.rect.y = 534
-
-            mode = 1
+            pygame.quit()
+            exit()
             
 
     # sprite masks
@@ -774,19 +766,24 @@ while not done:
 
         car_hit_list = pygame.sprite.groupcollide(all_cars_list, player_list, False, False)
 
-        if scroll_speed < max_speed:
+        if dead == True:
+            scroll_speed = 0
+        elif scroll_speed < max_speed:
             scroll_speed = round(scroll_speed + 0.05, 3)
 
-        for car in car_hit_list:
+        if car_hit_list:
             scroll_speed = 0
             exp = Explosion()
-            exp.rect.y = (car.rect.y + player.rect.y) / 2
-            exp.rect.x = (car.rect.x + player.rect.x) / 2
+            exp.rect.center = ((car.rect.centerx + player.rect.centerx) // 2, (car.rect.centery + player.rect.centery) // 2)
             layer0_10.add(exp)
             player.yspeed = 0
             player.xspeed = 0
             dead = True
-            pygame.time.set_timer(explosion_timer, 100)
+            pygame.time.set_timer(explosion_timer, 1000)
+            print("timer started")
+            
+        for car in car_hit_list:
+            car.kill()
 
         invis.update()
 
@@ -798,7 +795,9 @@ while not done:
 
         car_timer += 1
 
-        if sect == 1:
+        print(current_road)
+
+        if sect == 1 and current_road == "1m":
             car_gen()
 
     if mode == 1:
